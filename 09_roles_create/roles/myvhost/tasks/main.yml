@@ -1,0 +1,32 @@
+---
+# tasks file for myvhost
+- name: httpd, mod_ssl 설치
+  ansible.builtin.dnf:
+    name:
+      - httpd, mod_ssl
+    state: present
+
+- name: 웹서비스 기동
+  ansible.builtin.systemd:
+    name: httpd
+    state: started
+    enabled: true
+
+- name: 웹 서비스 설정 - /etc/httpd/conf.d/vhost.conf (vhost.conf.j2 -> vhost.conf)
+  ansible.builtin.template:
+    src: vhost.conf.j2
+    dest: /etc/httpd/conf.d/vhost.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: 
+    - Restart httpd
+
+- name: 웹 서비스 설정 - /var/www/html/index.html
+  ansible.builtin.file:
+    path: "/var/www/vhosts/{{ ansible_hostname }}"
+    state: directory
+    mode: '0755'
+    setype: httpd_sys_content_t
+
+

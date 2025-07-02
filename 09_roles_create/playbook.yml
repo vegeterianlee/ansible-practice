@@ -1,0 +1,28 @@
+---
+- name: Role test - myvhost
+  hosts: webservers
+  gather_facts: true
+  tasks:
+    - name: Start Role
+      ansible.builtin.debug:
+        msg: "let's go let's go together"
+    
+    - name: Role myvhost
+      ansible.builtin.include_role:
+        name: myvhost
+
+      ###
+      # 1) 웹 패키지 설치 - httpd, mod_ssl
+      # 2) 웹 서비스 기동 - httpd
+      # 3) 웹 서비스 설정 
+      # - /etc/httpd/conf.d/vhost.conf (vhost.conf.j2 -> vhost.conf)
+      # - /var/www/html/index.html (index.html(facts) -> index.html)
+      # 4) 방화벽에 등록
+      # - 방화벽 포트 등록
+      ###
+        
+
+    - name: Stop Role
+      ansible.builtin.debug:
+        msg: "have a good time"
+
