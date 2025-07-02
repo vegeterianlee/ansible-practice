@@ -1,0 +1,109 @@
+---
+- name: 3-tier 아키텍쳐 구현
+  hosts: webservers
+  gather_facts: yes
+  pre_tasks:
+  - name: 누가 접근했는 지 확인
+    ansible.builtin.debug:
+      msg: >
+        become_user="{{ ansible_user_id }}"
+        on host="{{ inventory_hostname }}"
+  tasks:
+  ###
+  # 1. web 서버 + 서비스 기동 + 방화벽 설치
+  # 2. DB 서버 패키지 설치, 서비스 기동, 설정 바꾸고 방화벽 포트 등록
+  ###
+  - name: 패키지 설치 (dnf)
+    ansible.builtin.dnf:
+        name: "{{ item }}"
+        state: latest
+    loop: 
+      - httpd
+      - mod_ssl
+      - php
+      - php-mysqlnd
+      - php-pdo
+      - firewalld
+  
+  - name: 서비스 기동 (systemd)
+    ansible.builtin.systemd:
+      state: started
+      enabled: true
+      name: "{{ item }}"
+    loop:
+      - httpd
+      - firewalld
+
+  - name: 방화벽에 http 등록
+    ansible.posix.firewalld:
+      service: "{{ item }}"
+      permanent: true
+      immediate: true
+      state: enabled
+    loop:
+      - http
+      - https
+
+  - name: db 서버 패키지 설치
+    ansible.builtin.dnf:
+      name:
+        - mariadb-server
+        - mariadb
+        - python3-PyMySQL
+  - name: db 서비스 기동
+    ansible.builtin.systemd:
+      name: mariadb
+      enabled: true
+      state: started
+  
+  - name: mysql secure installation
+    become: true
+    ansible.builtin.expect:
+      command: mysql_secure_installation
+      responses:
+        'Enter current password for root': ''
+        'Switch to unix_socket authentication': 'Y'
+        'Change the root password?': 'Y'
+        'New password': 'soldesk1.'
+        'Re-enter new password': 'soldesk1.'
+        'Remove anonymous users': 'Y'
+        'Disallow root login remotely': 'Y'
+        'Remove test database and access to it': 'Y'
+        'Reload privilege tables now': 'Y'
+      timeout: 1
+  
+  - name: 서비스 설정 - 사용자/권한 추가
+    become: true
+    community.mysql.mysql_user:
+      login_user: root
+      login_password: soldesk1.
+      name: soldesk
+      password: soldesk1.
+      priv: '*.*:ALL'
+      state: present
+  
+  - name: 방화벽 등록
+    ansible.posix.firewalld:
+      service: mysql
+      permanent: true
+      state: enabled
+      immediate: true
+
+
+# play2
+- name: 0) 웹 서버에 요청
+  hosts: localhost
+  become: false
+  tasks:
+    - name: 1) web1 웹 서버에 웹 요청 확인
+      ansible.builtin.uri:
+        url: http://ansible/index.php
+        status_code: 200
+      register: output
+
+    - name: 2) 웹 내용 확인
+      ansible.builtin.debug:
+        var: output
+        verbosity: 2
+
+...

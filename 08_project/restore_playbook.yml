@@ -1,0 +1,12 @@
+---
+- name: Restore ansible.builtin.import_playbook
+  hosts: all
+  tasks:
+    - name: 웹패키지 서비스 중지 후 삭제
+      ansible.builtin.include_tasks: plays/restore_web.yml
+      vars:
+        packages:
+          - httpd
+          - mod_ssl
+        services: httpd
+        file: /var/www/html/index.html

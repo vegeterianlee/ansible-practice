@@ -1,0 +1,3 @@
+2025-06-24T04:29:30.206806+00:00 WARNING 'ansible_navigator.actions.doc._update_args' Configuration errors encountered, rolling back to previous configuration.
+2025-06-24T04:29:30.207335+00:00 WARNING 'ansible_navigator.actions.doc._update_args' Issues were found while applying the settings.
+2025-06-24T04:29:30.207375+00:00 WARNING 'ansible_navigator.actions.doc._update_args' A plugin name or other parameter is required when using the doc subcommand

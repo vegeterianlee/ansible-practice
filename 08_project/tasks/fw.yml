@@ -1,0 +1,23 @@
+---
+- name: 방화벽 패키지 설치 - {{ packages }}
+  ansible.builtin.dnf:
+    name: "{{ packages }}"
+    state: present
+  
+- name: 방화벽 기동 - {{ services }}
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop: "{{ services }}"
+
+- name: 방화벽 포트 등록 - {{ rules }}
+  ansible.posix.firewalld:
+    service: "{{ item }}"
+    permanent: true
+    immediate: true
+    state: enabled
+  loop: "{{ rules }}"
+
+
+...

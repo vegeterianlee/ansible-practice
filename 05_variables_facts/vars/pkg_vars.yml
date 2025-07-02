@@ -1,0 +1,7 @@
+web_pkg: httpd
+web_svc: httpd
+ssl_pkg: mod_ssl
+firewall_svc: firewalld
+web_root: /var/www/html
+secrets_dir: /etc/httpd/secrets
+

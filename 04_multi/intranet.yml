@@ -1,0 +1,42 @@
+---
+- name: 웹 서버 설정
+  hosts: web1.example.com
+  tasks:
+    - name: 패키지 설치 - httpd, firewalld (dnf)
+      ansible.builtin.dnf:
+        name:
+          - httpd
+          - firewalld
+    - name: 웹 서버 설정 (copy)
+      ansible.builtin.copy:
+        content: "web1.example.com Server Page\n"
+        dest: /var/www/html/index.html
+        owner: apache
+        group: apache
+        mode: '0400'
+    - name: 웹 서비스 기동, 방화벽 서비스 기동 (systemd)
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+      loop:
+	      - httpd
+	      - firewalld
+    - name: 방화벽 서비스 등록 (firewalld)
+      ansible.posix.firewalld:
+        state: enabled
+        permanent: true
+        immediate: true
+        service: http
+
+- name: 웹 요청 테스트
+  hosts: localhost
+  become: false
+  tasks:
+    - name: web1.example.com으로 curl 명령
+      ansible.builtin.uri:
+        url: http://web1.example.com
+        return_content: true
+        status_code: 
+          - 200
+...

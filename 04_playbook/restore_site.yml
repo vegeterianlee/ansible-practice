@@ -1,0 +1,39 @@
+---
+- name: 복원 작업
+  hosts: all
+  tasks:
+    #######################################
+    # 1) 패키지 설치 - httpd
+    # 2) 웹서버 설정 - /var/www/html/index.html
+    # 3) 웹서버 기동 - httpd.service
+    # 4) 방화벽 등록
+    # 5) SELinux(?)
+    ########################################
+    - name: 방화벽 httpd 포트 제거 (firewalld)
+      ansible.posix.firewalld:
+        service: httpd
+        state: disabled
+        permanent: true
+        #immediate: true
+
+    - name: httpd 서비스 중지 enable 삭제 (systemd)
+      ansible.builtin.systemd:
+        name: httpd
+        state: stopped
+        enabled: false
+    - name: firewalld 서비스 중지 enable 삭제 (systemd)
+      ansible.builtin.systemd:
+        name: firewalld
+        state: stopped
+        enabled: false
+
+    - name: index 파일 삭제 (file)
+      ansible.builtin.file:
+        path: /var/www/html/index.html
+        state: absent
+
+    - name: httpd 패키지 삭제 (dnf)
+      ansible.builtin.dnf:
+        name: httpd
+        state: absent
+...

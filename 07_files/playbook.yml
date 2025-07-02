@@ -1,0 +1,10 @@
+---
+- name: Use fetch module
+  hosts: all
+  tasks:
+    - name: Fetch the /var/log/secure log file from mananged hosts
+      fetch:
+        src: /var/log/secure
+        dest: "secure-backups/{{ inventory_hostname }}-securelog"
+        flat: yes
+...

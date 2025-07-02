@@ -1,0 +1,129 @@
+---
+###
+# Play 01: .htaccess 파일 사용하는 웹서버 구축
+# (ㄱ) 패키지 설치
+# (ㄴ) 서비스 설정
+# /etc/httpd/conf/httpd.conf -> AllowOveride AuthConfig
+# /var/www/html/.htaccess
+# /etc/httpd/secrests/htpasswd
+# /var/www/html/index.html
+
+# (ㄷ) 서비스 기동
+# (ㄹ) 방화벽 등록
+
+# Play 02: 웹 요청
+###
+# - name: 1) 웹 서버 구축
+#   hosts: ansible1.example.com
+#   gather_facts: yes
+#   vars:
+#     firewall_pkg: firewalld
+#     firewall_svc: firewalld
+#     web_pkg: httpd
+#     web_svc: httpd
+#     ssl_pkg: mod_ssl
+#     httpdconf_src: files/httpd.conf
+#     httpdconf_dest: /etc/httpd/conf/httpd.conf
+#     htaccess_src: files/.htaccess
+#     secrets_dir: /etc/httpd/secrets
+#     secrets_src: files/htpasswd
+#     secrets_dest: "{{ secrets_dir }}/htpasswd"
+#     web_root: /var/www/html/
+#   tasks:
+#     - name: 1) 패키지 설치
+#       ansible.builtin.dnf:
+#         name:
+#           - "{{ firewall_pkg }}"
+#           - "{{ ssl_pkg }}"
+#           - "{{ web_pkg }}"
+    
+#     - name: 2) conf 파일 복사
+#       ansible.builtin.copy:
+#         src: "{{ httpdconf_src }}"
+#         dest: "{{ httpdconf_dest }}"
+#         owner: root
+#         group: root
+#         mode: "0644"
+
+#     - name: 2) .htaccess 파일 생성된 것 root html 폴더 아래로 이동
+#       ansible.builtin.copy:
+#         src: "{{ htaccess_src }}"
+#         dest: "{{ web_root }}"
+#         owner: apache
+#         group: apache
+#         mode: "0400"
+
+#     - name: 2) .htaccess root secret 파일 접근 권한 설정
+#       ansible.builtin.file:
+#         path: "{{ secrets_dir }}"
+#         owner: apache
+#         group: apache
+#         mode: "0700"
+#         state: directory
+
+#     - name: 2) .htaccess 기존 시크릿 파일을 root secret 경로에 복사
+#       ansible.builtin.copy:
+#         src: "{{ secrets_src }}"
+#         dest: "{{ secrets_dest }}"
+#         owner: apache
+#         group: apache
+#         mode: '0600'
+
+#     - name: 2) 정적 페이지 생성
+#       ansible.builtin.copy:
+#         content: |
+#           <pre>
+#               hostname: "{{ ansible_hostname }}"
+#               host_fqdn: "{{ ansible_fqdn }}"
+#               ip: "{{ ansible_default_ipv4.address }}"
+#           </pre>
+#         dest: "{{ web_root }}/index.html"
+#         mode: "0644"
+    
+#     - name: 3) 서비스 기동
+#       ansible.builtin.systemd:
+#         name: "{{ item }}"
+#         state: started
+#         enabled: true
+#       loop:
+#         - firewalld
+#         - httpd
+    
+#     - name: 3) 방화벽 설정
+#       ansible.posix.firewalld:
+#         service: http
+#         permanent: true
+#         state: enabled
+
+- name: 웹 서버 확인
+  hosts: localhost
+  become: false
+  gather_facts: false
+  vars_files:
+    - vars/secret.yml
+  tasks:
+    ###
+    # 웹 요청
+    # url: https://192.168.10.11/
+    # Id/pw: guest/soldesk1.
+    # -> vault password
+    # echo 'guest' > vault-pass && chmod 600 vault-pass
+    # ansible-playbook --vault-password-file=vault-pass
+    - name: 1) 웹 요청 확인
+      ansible.builtin.uri:
+        url: https://192.168.10.11/
+        user: "{{ id }}"
+        password: "{{ pass }}"
+        validate_certs: false
+        force_basic_auth: true
+        status_code:
+          - 200
+        return_content: yes
+      register: web_output
+      
+    - name: 2) 웹 출력 확인
+      ansible.builtin.debug:
+        var: web_output.content
+
+
+...

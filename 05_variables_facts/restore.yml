@@ -1,0 +1,53 @@
+###
+# 1) firewalld http,https 포트 제거
+# 2) /etc/httpd/secrets 폴더 제거
+# 3) /var/www/html/index.html 제거
+# 4) /var/www/html/.htaccess 제거
+# 5) httpd 서비스 disable
+# 6) httpd 패키지 삭제
+### 
+---
+- name: 복원 작업
+  hosts: all
+  vars_files:
+    - vars/pkg_vars.yml
+  tasks:
+    - name: 1) 방화벽 포트 제거
+      ansible.posix.firewalld:
+        service: "{{ item }}"
+        permanent: true
+        state: disabled
+      loop:
+        - http
+        - https
+  
+    - name: 2) secret 폴더 제거
+      ansible.builtin.file:
+        path: "{{ secrets_dir }}"
+        state: absent
+    
+    - name: 3) index.html 제거
+      ansible.builtin.file:
+        path: "{{ web_root }}/index.html"
+        state: absent
+    
+    - name: 4) .htaccess 제거
+      ansible.builtin.file:
+        path: "{{ web_root }}/.htaccess"
+        state: absent
+
+    - name: 5) httpd 서비스 종료
+      ansible.builtin.systemd:
+        name: "{{ web_svc }}"
+        state: stopped
+        enabled: false
+    
+    - name: 6) httpd 패키지 삭제
+      ansible.builtin.dnf:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ web_pkg }}"
+        - "{{ ssl_pkg }}"
+        
+...  

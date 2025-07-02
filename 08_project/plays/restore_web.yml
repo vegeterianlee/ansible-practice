@@ -1,0 +1,24 @@
+
+- name: 서비스 종료
+  ansible.builtin.systemd:
+    name: "{{ services }}"
+    state: stopped
+    enabled: true
+
+- name: 파일 삭제
+  ansible.builtin.file:
+    path: "{{ file }}"
+    state: absent
+
+- name: 패키지 삭제
+  ansible.builtin.dnf:
+    name: "{{ item }}"
+    state: absent
+  loop: "{{ packages }}"
+
+- name: 방화벽 포트 제거
+  ansible.posix.firewalld:
+    service: "{{ services }}"
+    permanent: true
+    immediate: true
+    state: disabled

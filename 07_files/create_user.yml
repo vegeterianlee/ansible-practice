@@ -1,0 +1,33 @@
+---
+###
+# 1) 사용자 추가
+# 2) /etc/sudoers.d/developer
+# 3) $HOME/.ssh/authoried_keys
+###
+
+- name: 0) 사용자 추가 - devops
+  hosts: all
+  remote_user: ansible
+  vars_files:   
+    - secret.yml
+  tasks:
+    - name: 1) 사용자 추가 및 암호 설정
+      ansible.builtin.user:
+        name: "{{ username }}"
+        password: "{{ pwhash | password_hash('sha512') }}"
+
+    - name: 2) 파일 배포 - /etc/sudoers.d/devops
+      ansible.builtin.copy:
+        src: ~/files/devops
+        dest: /etc/sudoers.d/devops
+        owner: root
+        group: root
+        mode: '0644'
+    
+    - name: 3) public key 배포
+      ansible.posix.authorized_key:
+        user: devops
+        state: present
+        key: "{{ lookup('file', '/home/ansible/.ssh/id_rsa.pub') }}"
+
+...
