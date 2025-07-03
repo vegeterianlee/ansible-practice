@@ -1,0 +1,40 @@
+---
+- name: Restore use-vhost-role.yml
+  hosts: all
+  tasks:
+    - name: 방화벽 포트 제거
+      ansible.posix.firewalld:
+        service: "{{ item }}"
+        state: disabled     
+        permanent: true
+        immediate: true
+      loop:
+        - http
+        - https
+    
+    - name: 서비스 종료
+      ansible.builtin.systemd:
+        name: "{{ item }}" 
+        state: stopped
+        enabled: false
+      loop:
+        - httpd
+        - firewalld
+    
+    - name: 웹 설정 삭제 /etc/httpd/conf.d/vhost.conf와 /var/www/vhosts
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/httpd/conf.d/vhost.conf
+        - /var/www/vhosts
+
+    - name: 웹페이지 삭제 - httpd, mod_ssl
+      ansible.builtin.dnf:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - httpd
+        - mod_ssl
+
+

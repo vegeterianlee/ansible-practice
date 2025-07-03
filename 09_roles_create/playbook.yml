@@ -2,14 +2,16 @@
 - name: Role test - myvhost
   hosts: webservers
   gather_facts: true
+  roles:
+    - myvhost
   tasks:
     - name: Start Role
       ansible.builtin.debug:
         msg: "let's go let's go together"
-    
+
     - name: Role myvhost
       ansible.builtin.include_role:
-        name: myvhost
+        name: myvhost    
 
       ###
       # 1) 웹 패키지 설치 - httpd, mod_ssl

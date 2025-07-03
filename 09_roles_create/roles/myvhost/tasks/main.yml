@@ -27,6 +27,31 @@
     path: "/var/www/vhosts/{{ ansible_hostname }}"
     state: directory
     mode: '0755'
+
+- name: selinux 설정
+  community.general.sefcontext:
+    target: "/var/www/vhosts(/.*)?"
     setype: httpd_sys_content_t
+    state: present
+    
+- name: selinux 적용
+  ansible.builtin.command: restorecon -ir /var/www/vhosts/index.html
+
+- name: 웹서비스 설정
+  ansible.builtin.copy:
+    content: hi ghello 
+    dest: /var/www/vhosts/index.html
+    mode: '0644'
+
+- name: 방화벽 포트 등록
+  ansible.posix.firewalld:
+    service: "{{ item }}" 
+    permanent: true
+    immediate: true
+    state: enabled
+  loop:
+    - http
+    - https
+    
 
 
