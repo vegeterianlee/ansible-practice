@@ -1,0 +1,55 @@
+---
+- name: selinux configure
+  gather_facts: false
+  hosts: webservers
+  tasks:
+    - name: selinux configure
+      lineinfile:
+        path: /etc/selinux/config
+        line: SELINUX=enforcing
+        regexp: '^SELINUX='
+    
+    - name: reboot
+      reboot:
+    
+    - name: setting a web server
+      file:
+        path: /webdev 
+        state: directory
+        owner: apache
+        group: apache
+        mode: '2755'
+
+    - name: allow apache context
+      community.general.sefcontext:
+        target: '/webdev(/.*)?'
+        state: present
+        setype: httpd_sys_content_t
+
+    - name: apply new selinux context /webdev
+      command: restorecon -irv /web/dev
+
+    - name: make a symbolic link
+      file:
+        src: /webdev
+        dest: /var/www/html/webdev
+        owner: root
+        group: root
+        state: link
+
+    - name: create index.html
+      lineinfile:
+        path: /webdev/index.html
+        line: "WEBSERVERS"
+        state: present
+        create: true
+
+- name: test a web page
+  hosts: ansible1
+  gather_facts: false
+  tasks:
+    - name: test uri
+      uri:
+        url: http://ansible1.example.com/webdev/
+        status_code: 200
+        return_content: true

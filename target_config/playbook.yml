@@ -1,0 +1,14 @@
+---
+- name: set target
+  hosts: webservers
+  tasks:
+    - name: set graphical.target
+      file:
+        src: /usr/lib/systemd/system/graphical.target
+        dest: /etc/systemd/system/default.target
+        state: link
+
+    - name: change default target at concurrent
+      command:
+        cmd: systemctl isolate graphical.target
+

@@ -1,0 +1,67 @@
+---
+- name: lvm 작업
+  hosts: webservers
+  gather_facts: true
+  tasks: 
+    # 에러메세지 점검
+    # sdb 디스크가 없으면 -> device does not exist
+    # lvm 작업
+      # 파티션 작업
+      # lvm 작업
+        # vg
+        # lv 
+      # 파일 시스템 작업
+      # 마운트 작업 (/etc/fstab)
+    ###
+    - name: 에러 메세지 출력 - sdb 디스크 유무 정검
+      ansible.builtin.fail:
+        msg: "device does not exist"
+      when: ansible_devices.sdb is not defined
+
+    - name: 파티션 작업
+      community.general.parted:
+        device: /dev/sdb
+        number: 1
+        state: present
+        part_start: 1MiB
+        part_end: 800MiB
+        flags: [ lvm ]
+    
+    - name: 팩트 재 수집
+      ansible.builtin.setup:
+        gather_subset:
+          - facter
+    
+    # - name: 에러 메시지 출력 - 파티션 크기 점검
+    #   ansible.builtin.fail:
+    #     msg: 'size not enough'
+    #   vars:
+    #     sdb1size: "{{ (ansible_devices.partition.sdb1.size) }}"
+    #   when: sdb1size | float < 500
+
+    - name: lvm 작업 - research vg
+      community.general.lvg:
+        vg: research
+        pvs: /dev/sdb1
+    
+    - name: lvm 작업 - data LV
+      community.general.lvol:
+        vg: research
+        lv: data
+        size: 500m
+      
+    - name: fs 작업 - ext4
+      community.general.filesystem:
+        dev: /dev/research/data
+        fstype: ext4
+    
+    - name: 마운트
+      ansible.posix.mount:
+        path: /mnt/data
+        src: 98dbcc7e-79e5-42ee-8770-4f0375617502
+        fstype: xfs
+        state: present
+
+
+
+

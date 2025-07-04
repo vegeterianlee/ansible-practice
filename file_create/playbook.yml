@@ -1,0 +1,12 @@
+---
+- name: /etc/issue file create
+  hosts: all
+  gather_facts: false
+  tasks:
+  - name: /etc/issue file create
+    copy:
+      content: "{{ mvstring }}/word_find"
+      dest: /etc/issue
+      mode: '0644'
+      owner: root
+      group: root

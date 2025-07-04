@@ -1,0 +1,18 @@
+---
+- name: replace file
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: delete file
+      file:
+        path: /etc/issue
+        state: absent
+    
+    - name: create file
+      lineinfile:
+        path: /etc/issue
+        line: "{{ mvstring }}"
+        create: yes
+        owner: root
+        group: root
+        mode: '0644'
